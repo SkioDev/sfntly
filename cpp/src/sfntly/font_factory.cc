@@ -96,12 +96,8 @@ void FontFactory::LoadFontsForBuilding(std::vector<uint8_t>* b,
 }
 
 void FontFactory::SerializeFont(Font* font, OutputStream* os) {
-  font->Serialize(os, &table_ordering_);
-}
-
-void FontFactory::SetSerializationTableOrdering(
-    const std::vector<int32_t>& table_ordering) {
-  table_ordering_ = table_ordering;
+  std::vector<int32_t> table_ordering;
+  font->Serialize(os, &table_ordering);
 }
 
 CALLER_ATTACH Font::Builder* FontFactory::NewFontBuilder() {
@@ -191,6 +187,9 @@ void FontFactory::LoadCollectionForBuilding(WritableFontData* wfd,
                font_number < num_fonts;
                font_number++, offset_table_offset += DataSize::kULONG) {
     int32_t offset = wfd->ReadULongAsInt(offset_table_offset);
+    if (offset < 0 || offset >= wfd->Length())
+      continue;
+
     FontBuilderPtr builder;
     builder.Attach(LoadSingleOTFForBuilding(wfd, offset));
     builders->push_back(builder);
